@@ -1,0 +1,41 @@
+const marks = [78, 92, 85, 67, 99, 88];
+
+// Using for loop
+function findHighestWithFor(arr) {
+  let highest = arr[0];
+  for (let i = 1; i < arr.length; i++) {
+    if (arr[i] > highest) {
+      highest = arr[i];
+    }
+  }
+  return highest;
+}
+
+// Using while loop
+function findHighestWithWhile(arr) {
+  let highest = arr[0];
+  let i = 1;
+  while (i < arr.length) {
+    if (arr[i] > highest) {
+      highest = arr[i];
+    }
+    i++;
+  }
+  return highest;
+}
+
+// Using forEach loop
+function findHighestWithForEach(arr) {
+  let highest = arr[0];
+  arr.forEach(mark => {
+    if (mark > highest) {
+      highest = mark;
+    }
+  });
+  return highest;
+}
+
+// Output results
+console.log("Highest Marks (for loop):", findHighestWithFor(marks));
+console.log("Highest Marks (while loop):", findHighestWithWhile(marks));
+console.log("Highest Marks (forEach loop):", findHighestWithForEach(marks));
