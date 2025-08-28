@@ -1,0 +1,16 @@
+// Define Student Details
+const student = {
+  name: "Aarav Sharma",
+  age: 20,
+  course: "Computer Science",
+  grade: "A",
+  isEnrolled: true
+};
+
+// Print student details using console.log
+console.log("Student Details:");
+console.log("Name:", student.name);
+console.log("Age:", student.age);
+console.log("Course:", student.course);
+console.log("Grade:", student.grade);
+console.log("Enrolled:", student.isEnrolled ? "Yes" : "No");
