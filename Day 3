@@ -1,0 +1,41 @@
+// Array of student objects with nested marks
+const students = [
+  {
+    name: "Aarav",
+    marks: { math: 85, science: 78, english: 92 }
+  },
+  {
+    name: "Bhavika",
+    marks: { math: 95, science: 88, english: 91 }
+  },
+  {
+    name: "Kiran",
+    marks: { math: 60, science: 55, english: 70 }
+  }
+];
+
+// 1️⃣ Calculate total and average marks for each student
+const studentResults = students.map(student => {
+  const markValues = Object.values(student.marks);
+  const total = markValues.reduce((sum, mark) => sum + mark, 0);
+  const average = total / markValues.length;
+
+  return {
+    name: student.name,
+    total,
+    average
+  };
+});
+
+console.log("Student Results:", studentResults);
+
+// 2️⃣ Filter students with average above 80
+const topStudents = studentResults.filter(student => student.average >= 80);
+console.log("Top Performers:", topStudents);
+
+// 3️⃣ Calculate class average
+const classAverage =
+  studentResults.reduce((sum, student) => sum + student.average, 0) /
+  studentResults.length;
+
+console.log("Class Average:", classAverage.toFixed(2));
