@@ -1,0 +1,82 @@
+// App.jsx
+import React, { useState } from 'react';
+
+function App() {
+  // Counter state
+  const [count, setCount] = useState(0);
+
+  // Text input state
+  const [text, setText] = useState('');
+
+  // Handlers
+  const increment = () => setCount(prev => prev + 1);
+  const decrement = () => setCount(prev => prev - 1);
+  const handleChange = (e) => setText(e.target.value);
+
+  return (
+    <div style={styles.container}>
+      <h1>React State Management</h1>
+
+      {/* Counter Section */}
+      <div style={styles.section}>
+        <h2>Counter</h2>
+        <div style={styles.counterBox}>
+          <button onClick={decrement} style={styles.button}>-</button>
+          <span style={styles.count}>{count}</span>
+          <button onClick={increment} style={styles.button}>+</button>
+        </div>
+      </div>
+
+      {/* Live Text Preview Section */}
+      <div style={styles.section}>
+        <h2>Live Text Preview</h2>
+        <input
+          type="text"
+          value={text}
+          onChange={handleChange}
+          placeholder="Type something..."
+          style={styles.input}
+        />
+        <p style={styles.preview}>Preview: {text}</p>
+      </div>
+    </div>
+  );
+}
+
+const styles = {
+  container: {
+    fontFamily: 'Arial, sans-serif',
+    padding: '40px',
+    maxWidth: '500px',
+    margin: 'auto',
+  },
+  section: {
+    marginBottom: '40px',
+  },
+  counterBox: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '20px',
+  },
+  button: {
+    padding: '10px 20px',
+    fontSize: '18px',
+    cursor: 'pointer',
+  },
+  count: {
+    fontSize: '24px',
+    fontWeight: 'bold',
+  },
+  input: {
+    padding: '10px',
+    width: '100%',
+    fontSize: '16px',
+    marginTop: '10px',
+  },
+  preview: {
+    marginTop: '10px',
+    fontStyle: 'italic',
+  },
+};
+
+export default App;
