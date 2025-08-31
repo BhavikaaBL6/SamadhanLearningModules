@@ -1,0 +1,57 @@
+// App.jsx
+import React from 'react';
+
+function ProfileCard({ name, title, image, bio }) {
+  return (
+    <div style={styles.card}>
+      <img src={image} alt={`${name}'s profile`} style={styles.image} />
+      <h2>{name}</h2>
+      <h4>{title}</h4>
+      <p>{bio}</p>
+    </div>
+  );
+}
+
+function App() {
+  const user = {
+    name: 'BHAVIKA',
+    title: 'Full-Stack Developer',
+    image: 'https://via.placeholder.com/150',
+    bio: 'Passionate about building modern web apps with React and Node.js.',
+  };
+
+  return (
+    <div style={styles.container}>
+      <ProfileCard
+        name={user.name}
+        title={user.title}
+        image={user.image}
+        bio={user.bio}
+      />
+    </div>
+  );
+}
+
+const styles = {
+  container: {
+    display: 'flex',
+    justifyContent: 'center',
+    marginTop: '50px',
+  },
+  card: {
+    width: '300px',
+    padding: '20px',
+    borderRadius: '10px',
+    boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+    textAlign: 'center',
+    fontFamily: 'Arial, sans-serif',
+    backgroundColor: '#f9f9f9',
+  },
+  image: {
+    width: '100px',
+    borderRadius: '50%',
+    marginBottom: '15px',
+  },
+};
+
+export default App;
