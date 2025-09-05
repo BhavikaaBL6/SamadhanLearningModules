@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mini Social Platform</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f2f5;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+    }
+    .post-box {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    .post-box textarea {
+      width: 100%;
+      padding: 10px;
+      resize: none;
+    }
+    .post-box button {
+      margin-top: 10px;
+      padding: 8px 15px;
+      border: none;
+      background: #1877f2;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .post {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      margin-bottom: 15px;
+    }
+    .post .actions {
+      margin-top: 10px;
+      display: flex;
+      gap: 10px;
+    }
+    .post button {
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: #555;
+    }
+    .post button:hover {
+      color: #1877f2;
+    }
+    .comments {
+      margin-top: 10px;
+      padding-left: 15px;
+      border-left: 2px solid #ddd;
+    }
+    .comment-input {
+      display: flex;
+      gap: 5px;
+      margin-top: 5px;
+    }
+    .comment-input input {
+      flex: 1;
+      padding: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Create Post -->
+    <div class="post-box">
+      <textarea id="postInput" rows="3" placeholder="What's on your mind?"></textarea>
+      <button onclick="createPost()">Post</button>
+    </div>
+
+    <!-- Feed -->
+    <div id="feed"></div>
+  </div>
+
+  <script>
+    function createPost() {
+      let input = document.getElementById("postInput");
+      let text = input.value.trim();
+      if (text === "") return;
+
+      let post = document.createElement("div");
+      post.className = "post";
+      post.innerHTML = `
+        <p>${text}</p>
+        <div class="actions">
+          <button onclick="likePost(this)">👍 Like (<span>0</span>)</button>
+          <button onclick="toggleComments(this)">💬 Comment</button>
+        </div>
+        <div class="comments" style="display:none;">
+          <div class="comment-input">
+            <input type="text" placeholder="Write a comment...">
+            <button onclick="addComment(this)">Send</button>
+          </div>
+          <div class="comment-list"></div>
+        </div>
+      `;
+
+      document.getElementById("feed").prepend(post);
+      input.value = "";
+    }
+
+    function likePost(btn) {
+      let countSpan = btn.querySelector("span");
+      let count = parseInt(countSpan.innerText);
+      countSpan.innerText = count + 1;
+    }
+
+    function toggleComments(btn) {
+      let comments = btn.closest(".post").querySelector(".comments");
+      comments.style.display = comments.style.display === "none" ? "block" : "none";
+    }
+
+    function addComment(btn) {
+      let input = btn.previousElementSibling;
+      let text = input.value.trim();
+      if (text === "") return;
+
+      let commentList = btn.closest(".comments").querySelector(".comment-list");
+
+      let comment = document.createElement("p");
+      comment.innerText = text;
+
+      commentList.appendChild(comment);
+      input.value = "";
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mini Trello Clone</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f5f7;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      gap: 20px;
+    }
+    .board {
+      background: #ebecf0;
+      padding: 10px;
+      border-radius: 10px;
+      width: 300px;
+      display: flex;
+      flex-direction: column;
+    }
+    .board h2 {
+      margin: 0 0 10px;
+      font-size: 18px;
+    }
+    .card {
+      background: white;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+      cursor: grab;
+    }
+    .card:active {
+      cursor: grabbing;
+    }
+    .add-task {
+      margin-top: auto;
+      display: flex;
+      gap: 5px;
+    }
+    .add-task input {
+      flex: 1;
+      padding: 5px;
+    }
+    .add-task button {
+      padding: 5px 10px;
+      border: none;
+      background: #0079bf;
+      color: white;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .add-task button:hover {
+      background: #005a8d;
+    }
+  </style>
+</head>
+<body>
+  <div class="board" ondrop="drop(event)" ondragover="allowDrop(event)">
+    <h2>To Do</h2>
+    <div class="card" draggable="true" ondragstart="drag(event)">Learn HTML</div>
+    <div class="card" draggable="true" ondragstart="drag(event)">Write CSS</div>
+    <div class="add-task">
+      <input type="text" id="todoInput" placeholder="New task...">
+      <button onclick="addTask('todoInput', this)">+</button>
+    </div>
+  </div>
+
+  <div class="board" ondrop="drop(event)" ondragover="allowDrop(event)">
+    <h2>In Progress</h2>
+    <div class="card" draggable="true" ondragstart="drag(event)">Build Trello Clone</div>
+    <div class="add-task">
+      <input type="text" id="progressInput" placeholder="New task...">
+      <button onclick="addTask('progressInput', this)">+</button>
+    </div>
+  </div>
+
+  <div class="board" ondrop="drop(event)" ondragover="allowDrop(event)">
+    <h2>Done</h2>
+    <div class="card" draggable="true" ondragstart="drag(event)">Setup Project</div>
+    <div class="add-task">
+      <input type="text" id="doneInput" placeholder="New task...">
+      <button onclick="addTask('doneInput', this)">+</button>
+    </div>
+  </div>
+
+  <script>
+    let draggedItem = null;
+
+    function drag(event) {
+      draggedItem = event.target;
+    }
+
+    function allowDrop(event) {
+      event.preventDefault();
+    }
+
+    function drop(event) {
+      event.preventDefault();
+      if (draggedItem && event.target.classList.contains("board")) {
+        event.target.insertBefore(draggedItem, event.target.querySelector(".add-task"));
+      } else if (draggedItem && event.target.classList.contains("card")) {
+        event.target.parentNode.insertBefore(draggedItem, event.target.nextSibling);
+      }
+    }
+
+    function addTask(inputId, btn) {
+      let input = document.getElementById(inputId);
+      let taskText = input.value.trim();
+      if (taskText === "") return;
+
+      let newCard = document.createElement("div");
+      newCard.className = "card";
+      newCard.setAttribute("draggable", "true");
+      newCard.setAttribute("ondragstart", "drag(event)");
+      newCard.innerText = taskText;
+
+      let board = btn.closest(".board");
+      board.insertBefore(newCard, board.querySelector(".add-task"));
+
+      input.value = "";
+    }
+  </script>
+</body>
+</html>

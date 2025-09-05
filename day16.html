@@ -1,0 +1,736 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Single-fil Online Store</title>
+  <style>
+    :root{
+      --bg:#f6f7fb; --card:#fff; --muted:#6b6f76; --accent:#2563eb;
+      --success:#16a34a; --danger:#dc2626;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,Segoe UI,Roboto,Arial; background:var(--bg); color:#111;}
+    header{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;background:linear-gradient(90deg,#fff,#f9fafb);box-shadow:0 2px 8px rgba(16,24,40,0.05);position:sticky;top:0;z-index:40}
+    .brand{font-weight:700;cursor:pointer}
+    .controls{display:flex;gap:10px;align-items:center}
+    .search{padding:8px 10px;border-radius:8px;border:1px solid #e6e9ef;background:white}
+    .btn{padding:8px 12px;border-radius:8px;border:0;cursor:pointer;background:var(--accent);color:white;font-weight:600}
+    .btn.ghost{background:transparent;color:var(--accent);border:1px solid #e6e9ef}
+    .container{max-width:1100px;margin:20px auto;padding:0 16px}
+    .layout{display:grid;grid-template-columns:1fr 360px;gap:20px}
+    @media (max-width:900px){ .layout{grid-template-columns:1fr} .aside{order:-1} }
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+    .card{background:var(--card);border-radius:12px;padding:12px;box-shadow:0 6px 16px rgba(13, 27, 62, 0.04);display:flex;flex-direction:column;gap:8px}
+    .card img{width:100%;height:140px;object-fit:cover;border-radius:8px}
+    .price{font-weight:700;color:#0f172a}
+    .muted{color:var(--muted)}
+    .tag{display:inline-block;padding:4px 8px;border-radius:999px;background:#eef2ff;color:#1e3a8a;font-size:12px}
+    /* Cart / aside */
+    .aside{background:transparent}
+    .cart{background:var(--card);padding:12px;border-radius:12px;box-shadow:0 6px 16px rgba(13, 27, 62, 0.04)}
+    .cart-item{display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px dashed #eef2ff}
+    .cart-item img{width:64px;height:48px;object-fit:cover;border-radius:8px}
+    .small{font-size:13px;color:var(--muted)}
+    .qty{display:inline-flex;align-items:center;gap:6px}
+    .icon-btn{background:#f3f4f6;border-radius:6px;padding:6px;border:1px solid #e6e9ef;cursor:pointer}
+    /* modal */
+    .modal-bg{position:fixed;inset:0;background:rgba(2,6,23,0.45);display:none;align-items:center;justify-content:center;padding:20px;z-index:60}
+    .modal{background:var(--card);width:100%;max-width:760px;border-radius:12px;padding:18px;box-shadow:0 20px 40px rgba(2,6,23,0.25)}
+    .row{display:flex;gap:12px}
+    .col{flex:1}
+    label{display:block;font-size:13px;margin-bottom:6px;color:var(--muted)}
+    input,textarea,select{width:100%;padding:8px;border-radius:8px;border:1px solid #e6e9ef;background:#fff}
+    textarea{min-height:80px}
+    footer{padding:18px;text-align:center;color:var(--muted);font-size:13px}
+    .flex{display:flex;gap:12px;align-items:center}
+    .center{display:flex;align-items:center;justify-content:center}
+    .empty{padding:20px;text-align:center;color:var(--muted)}
+    .pill{padding:6px 10px;border-radius:999px;background:#ecfeff;color:#064e3b;font-size:13px}
+    .danger{background:var(--danger);color:white;border-radius:8px;padding:8px 10px}
+    .success{background:var(--success);color:white;border-radius:8px;padding:8px 10px}
+    .controls select{padding:8px;border-radius:8px;border:1px solid #e6e9ef;background:white}
+    .small-link{font-size:13px;color:var(--accent);cursor:pointer}
+    .badge{background:#111827;color:white;padding:6px 8px;border-radius:8px;font-weight:700}
+    /* tiny form */
+    .form-row{display:flex;gap:8px}
+    .form-row > * {flex:1}
+    .right{text-align:right}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand" onclick="goHome()">The Byte Forges Store</div>
+    <div class="controls">
+      <input class="search" id="q" placeholder="Search products..." oninput="renderProducts()" />
+      <select id="category" onchange="renderProducts()">
+        <option value="">All categories</option>
+      </select>
+      <button class="btn ghost" onclick="openAuth()">Login / Sign up</button>
+      <button class="btn ghost" id="adminBtn" onclick="openAdmin()">Admin</button>
+      <button class="btn" onclick="toggleCart()">Cart <span id="cartCount" class="badge" style="margin-left:8px">0</span></button>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="layout">
+      <section>
+        <div class="flex" style="justify-content:space-between;align-items:center;margin-bottom:12px">
+          <h2 style="margin:0">Products</h2>
+          <div class="small muted">Wellcome to The Byte Forges online Store</div>
+        </div>
+
+        <div class="flex" style="gap:8px;margin-bottom:12px">
+          <div class="small muted">Sort:</div>
+          <select id="sort" onchange="renderProducts()">
+            <option value="new">Newest</option>
+            <option value="price-asc">Price ↑</option>
+            <option value="price-desc">Price ↓</option>
+            <option value="popular">Popular (demo)</option>
+          </select>
+          <div style="flex:1"></div>
+          <button class="btn ghost" onclick="seedIfEmpty()">Reset sample data</button>
+        </div>
+
+        <div id="products" class="grid"></div>
+      </section>
+
+      <aside class="aside">
+        <div id="cartBox" class="cart">
+          <h3 style="margin:0 0 8px 0">Your Cart</h3>
+          <div id="cartItems"></div>
+          <div id="cartEmpty" class="empty" style="display:none">Cart is empty — add something!</div>
+          <div style="margin-top:12px" id="checkoutRow" class="right">
+            <div class="small muted">Total: <span id="cartTotal">₹0</span></div>
+            <div style="margin-top:8px"><button class="btn" onclick="checkout()">Place order</button></div>
+          </div>
+        </div>
+
+        <div style="height:16px"></div>
+
+        <div class="cart">
+          <h4 style="margin:0 0 8px 0">Quick actions</h4>
+          <div style="display:flex;gap:8px">
+            <button class="btn ghost" onclick="viewOrders()">My Orders</button>
+            <button class="btn ghost" onclick="exportData()">Export</button>
+          </div>
+          <div style="margin-top:12px" class="small muted">
+            Tip: This stores everything in your localStorage.
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <!-- Modal background -->
+  <div id="modalBg" class="modal-bg" onclick="closeModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <footer>
+    Made with ❤️ — HTML store by byte forges team. Local orders are saved to localStorage.
+  </footer>
+
+  <script>
+    
+
+    /* ---------- Utilities ---------- */
+    function $id(id){return document.getElementById(id)}
+    function uid(prefix='id'){return prefix + Math.random().toString(36).slice(2,9)}
+    function currency(n){ return '₹' + Number(n).toLocaleString('en-IN') }
+
+    /* ---------- Local storage helpers ---------- */
+    const LS = {
+      get(k, fallback=null){
+        try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : fallback; }catch(e){return fallback}
+      },
+      set(k, v){ localStorage.setItem(k, JSON.stringify(v)); },
+      remove(k){ localStorage.removeItem(k); }
+    }
+
+    /* ---------- Keys ---------- */
+    const K_PRODUCTS = 'STORE_PRODUCTS';
+    const K_USERS = 'STORE_USERS';
+    const K_ORDERS = 'STORE_ORDERS';
+    const K_SESSION = 'STORE_SESSION'; // holds logged-in user id
+
+    /* ---------- Seed sample data ---------- */
+    function sampleProducts(){
+      return [
+        { _id: uid('p'), title: 'Blue Cotton T-shirt', description: 'Comfort-fit breathable cotton tee', price: 299, image: 'https://picsum.photos/seed/p1/800/600', category: 'Clothing', inventory: 50, popular: 8, createdAt: Date.now() - 1000*60*60*24*5 },
+        { _id: uid('p'), title: 'Minimal Sneakers', description: 'Lightweight running shoes', price: 1999, image: 'https://picsum.photos/seed/p2/800/600', category: 'Footwear', inventory: 30, popular: 15, createdAt: Date.now() - 1000*60*60*24*15 },
+        { _id: uid('p'), title: '15L Travel Backpack', description: 'Compact backpack for daily use', price: 1299, image: 'https://picsum.photos/seed/p3/800/600', category: 'Bags', inventory: 20, popular: 5, createdAt: Date.now() - 1000*60*60*24*2 },
+        { _id: uid('p'), title: 'Wireless Earbuds', description: 'Clean sound, long battery', price: 2499, image: 'https://picsum.photos/seed/p4/800/600', category: 'Electronics', inventory: 15, popular: 18, createdAt: Date.now() - 1000*60*60*24*30 },
+        { _id: uid('p'), title: 'Classic Wristwatch', description: 'Analog watch with leather strap', price: 3499, image: 'https://picsum.photos/seed/p5/800/600', category: 'Accessories', inventory: 10, popular: 9, createdAt: Date.now() - 1000*60*60*24*20 }
+      ];
+    }
+
+    function seedIfEmpty(){
+      if(!LS.get(K_PRODUCTS)) LS.set(K_PRODUCTS, sampleProducts());
+      if(!LS.get(K_USERS)) {
+        const hashPass = (p) => btoa(p); // tiny "hash" for demo only (NOT secure)
+        const admin = { _id: uid('u'), name: 'Admin', email: 'admin@example.com', password: hashPass('admin123'), isAdmin: true, createdAt: Date.now() };
+        LS.set(K_USERS, [admin]);
+        alert('Admin user created: admin@example.com / admin123 (client-side demo)');
+      }
+      if(!LS.get(K_ORDERS)) LS.set(K_ORDERS, []);
+      renderProducts();
+      renderCart();
+      populateCategory();
+    }
+
+    /* ---------- Session ---------- */
+    function currentUser(){
+      const sid = LS.get(K_SESSION);
+      if(!sid) return null;
+      const users = LS.get(K_USERS, []);
+      return users.find(u => u._id === sid) || null;
+    }
+
+    function loginUser(user){
+      LS.set(K_SESSION, user._id);
+      renderAuthButton();
+      closeModal();
+      showToast('Logged in as ' + user.name);
+    }
+
+    function logout(){
+      LS.remove(K_SESSION);
+      renderAuthButton();
+      showToast('Logged out');
+    }
+
+    /* ---------- Products UI ---------- */
+    function getProducts(){
+      return LS.get(K_PRODUCTS, []);
+    }
+
+    function saveProducts(prods){
+      LS.set(K_PRODUCTS, prods);
+    }
+
+    function renderProducts(){
+      const container = $id('products');
+      container.innerHTML = '';
+      let products = getProducts().slice();
+
+      // filter search
+      const q = $id('q').value.trim().toLowerCase();
+      if(q) products = products.filter(p => (p.title + ' ' + p.description + ' ' + (p.category||'')).toLowerCase().includes(q));
+
+      // filter category
+      const cat = $id('category').value;
+      if(cat) products = products.filter(p => p.category === cat);
+
+      // sort
+      const sort = $id('sort').value;
+      if(sort === 'price-asc') products.sort((a,b)=> a.price - b.price);
+      else if(sort === 'price-desc') products.sort((a,b)=> b.price - a.price);
+      else if(sort === 'popular') products.sort((a,b)=> (b.popular||0) - (a.popular||0));
+      else products.sort((a,b)=> (b.createdAt || 0) - (a.createdAt || 0));
+
+      if(products.length === 0){
+        container.innerHTML = '<div class="empty">No products found</div>';
+        return;
+      }
+
+      products.forEach(p => {
+        const el = document.createElement('div');
+        el.className = 'card';
+        el.innerHTML = `
+          <img src="${p.image}" loading="lazy" alt="${escapeHtml(p.title)}" />
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <h4 style="margin:0 0 6px 0">${escapeHtml(p.title)}</h4>
+              <div class="small muted">${escapeHtml(p.category || '')}</div>
+            </div>
+            <div class="tag">${currency(p.price)}</div>
+          </div>
+          <div class="muted small" style="flex:1">${escapeHtml(p.description.slice(0,120))}${p.description.length>120 ? '…' : ''}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+            <div style="display:flex;gap:8px">
+              <button class="btn ghost" onclick='viewProduct("${p._id}")'>View</button>
+              <button class="btn" onclick='addToCart("${p._id}",1)'>Add to cart</button>
+            </div>
+            <div class="small muted">Stock: ${p.inventory}</div>
+          </div>
+        `;
+        container.appendChild(el);
+      });
+    }
+
+    function populateCategory(){
+      const cats = Array.from(new Set(getProducts().map(p => p.category).filter(Boolean)));
+      const select = $id('category');
+      select.innerHTML = '<option value="">All categories</option>';
+      cats.forEach(c => {
+        const o = document.createElement('option'); o.value = c; o.textContent = c;
+        select.appendChild(o);
+      });
+    }
+
+    /* ---------- Product details modal ---------- */
+    function viewProduct(id){
+      const p = getProducts().find(x=>x._id===id);
+      if(!p) return alert('Product not found');
+      openModal(`
+        <div class="row">
+          <div class="col" style="max-width:360px">
+            <img src="${p.image}" style="width:100%;height:100%;max-height:320px;object-fit:cover;border-radius:8px" />
+          </div>
+          <div class="col">
+            <h2 style="margin-top:0">${escapeHtml(p.title)}</h2>
+            <div class="small muted">${escapeHtml(p.category || '')}</div>
+            <div style="margin-top:12px" class="price">${currency(p.price)}</div>
+            <p class="muted small" style="margin-top:8px">${escapeHtml(p.description)}</p>
+            <div style="margin-top:12px" class="flex">
+              <div class="small muted">Qty</div>
+              <input id="qtyInput" type="number" min="1" value="1" style="width:80px" />
+            </div>
+            <div style="margin-top:14px" class="flex">
+              <button class="btn" onclick='modalAddToCart("${p._id}")'>Add to cart</button>
+              <button class="btn ghost" onclick="closeModal()">Close</button>
+              ${currentUser() && currentUser().isAdmin ? `<button class="btn ghost" onclick='openEditProduct("${p._id}")'>Edit</button>` : ''}
+            </div>
+          </div>
+        </div>
+      `);
+    }
+
+    function modalAddToCart(pid){
+      const q = parseInt($id('qtyInput').value) || 1;
+      addToCart(pid, q);
+      closeModal();
+    }
+
+    /* ---------- Cart ---------- */
+    function cartItems(){
+      return LS.get('STORE_CART', []);
+    }
+    function saveCart(c){ LS.set('STORE_CART', c); renderCart(); }
+
+    function addToCart(productId, quantity=1){
+      const p = getProducts().find(x=>x._id===productId);
+      if(!p) return alert('Product not found');
+      const cart = cartItems();
+      const found = cart.find(i => i.productId === productId);
+      if(found){
+        found.quantity = Math.min((p.inventory || 9999), found.quantity + quantity);
+      } else {
+        cart.push({ productId, title: p.title, price: p.price, image: p.image, quantity: Math.max(1, quantity) });
+      }
+      saveCart(cart);
+      showToast('Added to cart');
+    }
+
+    function renderCart(){
+      const c = cartItems();
+      $id('cartCount').textContent = c.reduce((s,i)=>s+i.quantity,0);
+      const wrap = $id('cartItems');
+      wrap.innerHTML = '';
+      if(c.length === 0){
+        $id('cartEmpty').style.display = 'block';
+        $id('checkoutRow').style.display = 'none';
+        return;
+      }
+      $id('cartEmpty').style.display = 'none';
+      $id('checkoutRow').style.display = 'block';
+      c.forEach((it, idx) => {
+        const div = document.createElement('div');
+        div.className = 'cart-item';
+        div.innerHTML = `
+          <img src="${it.image}" alt="${escapeHtml(it.title)}" />
+          <div style="flex:1">
+            <div style="display:flex;justify-content:space-between;align-items:start">
+              <div>
+                <div style="font-weight:700">${escapeHtml(it.title)}</div>
+                <div class="small muted">₹${it.price} • ₹${(it.price*it.quantity).toFixed(0)}</div>
+              </div>
+              <div class="small muted">x${it.quantity}</div>
+            </div>
+            <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+              <button class="icon-btn" onclick="changeQty(${idx}, -1)">-</button>
+              <div class="small">${it.quantity}</div>
+              <button class="icon-btn" onclick="changeQty(${idx}, 1)">+</button>
+              <button class="icon-btn" onclick="removeItem(${idx})">Remove</button>
+            </div>
+          </div>
+        `;
+        wrap.appendChild(div);
+      });
+      $id('cartTotal').textContent = currency(c.reduce((s,i)=>s + i.price * i.quantity, 0));
+    }
+
+    function changeQty(idx, delta){
+      const c = cartItems();
+      c[idx].quantity = Math.max(1, c[idx].quantity + delta);
+      saveCart(c);
+    }
+    function removeItem(idx){
+      const c = cartItems(); c.splice(idx,1); saveCart(c);
+    }
+
+    function toggleCart(){ window.scrollTo({top:0,behavior:'smooth'}); const el = document.querySelector('aside'); el.scrollIntoView({behavior:'smooth'}); }
+
+    /* ---------- Checkout & Orders ---------- */
+    function checkout(){
+      const user = currentUser();
+      if(!user) return openAuth('login');
+      const c = cartItems();
+      if(c.length === 0) return alert('Cart empty');
+      // create order
+      const orders = LS.get(K_ORDERS, []);
+      const id = uid('o');
+      const order = {
+        _id: id,
+        items: c.map(it => ({ productId: it.productId, title: it.title, price: it.price, quantity: it.quantity })),
+        total: c.reduce((s,i)=>s+i.price*i.quantity,0),
+        userId: user._id,
+        status: 'created',
+        createdAt: Date.now()
+      };
+      orders.push(order);
+      LS.set(K_ORDERS, orders);
+      // reduce inventory
+      const prods = getProducts();
+      order.items.forEach(it => {
+        const p = prods.find(x=>x._id===it.productId);
+        if(p) p.inventory = Math.max(0, (p.inventory || 0) - it.quantity);
+      });
+      saveProducts(prods);
+      // clear cart
+      saveCart([]);
+      renderProducts();
+      showToast('Order placed — ID: ' + id);
+      viewOrders(); // show confirmation
+    }
+
+    function viewOrders(){
+      const user = currentUser();
+      const orders = LS.get(K_ORDERS, []);
+      const my = user ? orders.filter(o => o.userId === user._id) : [];
+      openModal(`
+        <h3>My Orders</h3>
+        ${user ? (my.length ? my.map(o=>`
+          <div style="padding:10px;border-bottom:1px solid #f1f5f9">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div><strong>Order ${o._id}</strong><div class="small muted">${new Date(o.createdAt).toLocaleString()}</div></div>
+              <div><span class="pill">${currency(o.total)}</span></div>
+            </div>
+            <div style="margin-top:8px">
+              ${o.items.map(it=>`<div class="small">${escapeHtml(it.title)} × ${it.quantity} — ${currency(it.price*it.quantity)}</div>`).join('')}
+            </div>
+            <div style="margin-top:8px" class="small muted">Status: ${escapeHtml(o.status)}</div>
+          </div>
+        `).join('') : '<div class="empty">No orders yet</div>') : '<div class="empty">You need to login to see your orders</div>'}
+      `);
+    }
+
+    /* ---------- Auth modal ---------- */
+    function openAuth(mode='login'){
+      openModal(`
+        <h3>${mode==='login' ? 'Login' : 'Sign up'}</h3>
+        <form onsubmit="event.preventDefault(); ${mode==='login' ? 'submitLogin()' : 'submitSignup()'}">
+          ${mode==='signup' ? '<label>Name<input id="regName" required /></label>' : ''}
+          <label>Email<input id="regEmail" type="email" required /></label>
+          <label>Password<input id="regPass" type="password" required /></label>
+          <div style="margin-top:8px;display:flex;gap:8px">
+            <button class="btn" type="submit">${mode==='login' ? 'Login' : 'Sign up'}</button>
+            <button class="btn ghost" type="button" onclick="closeModal()">Cancel</button>
+            <div style="flex:1"></div>
+            <a class="small-link" onclick="switchAuthMode()">${mode==='login' ? 'Create an account' : 'Have an account? Login'}</a>
+          </div>
+        </form>
+      `);
+      modalState.authMode = mode;
+    }
+
+    function switchAuthMode(){
+      const m = modalState.authMode === 'login' ? 'signup' : 'login';
+      openAuth(m);
+    }
+
+    function submitSignup(){
+      const name = $id('regName').value.trim();
+      const email = $id('regEmail').value.trim().toLowerCase();
+      const pass = $id('regPass').value;
+      if(!name || !email || !pass) return alert('Fill all fields');
+      const users = LS.get(K_USERS, []);
+      if(users.find(u=>u.email===email)) return alert('User exists');
+      const user = { _id: uid('u'), name, email, password: btoa(pass), isAdmin: false, createdAt: Date.now() };
+      users.push(user);
+      LS.set(K_USERS, users);
+      loginUser(user);
+    }
+
+    function submitLogin(){
+      const email = $id('regEmail').value.trim().toLowerCase();
+      const pass = $id('regPass').value;
+      const users = LS.get(K_USERS, []);
+      const u = users.find(x=>x.email === email && (x.password === btoa(pass) || x.password === undefined && x.passwordHash === btoa(pass)));
+      if(!u) return alert('Invalid credentials');
+      loginUser(u);
+    }
+
+    function renderAuthButton(){
+      const u = currentUser();
+      const btn = document.querySelector('header .controls .btn.ghost');
+      const adminBtn = $id('adminBtn');
+      if(u){
+        // replace login button with user menu
+        btn.textContent = u.name + ' (Logout)';
+        btn.onclick = () => { if(confirm('Logout?')) logout() };
+        adminBtn.style.display = u.isAdmin ? 'inline-block' : 'none';
+      } else {
+        btn.textContent = 'Login / Sign up';
+        btn.onclick = () => openAuth('login');
+        adminBtn.style.display = 'inline-block';
+      }
+    }
+
+    /* ---------- Admin (add/edit products) ---------- */
+    function openAdmin(){
+      const user = currentUser();
+      if(!user || !user.isAdmin){
+        // ask for admin password (demo)
+        const pw = prompt('Admin password (demo):\n(enter admin123 to become admin user in this browser)');
+        if(!pw) return;
+        // create an admin user if provided correct demo password and not an actual admin user logged in
+        if(pw === 'admin123'){
+          // create admin user or login as existing admin user
+          let users = LS.get(K_USERS, []);
+          let admin = users.find(u => u.isAdmin);
+          if(!admin){
+            admin = { _id: uid('u'), name: 'Admin', email: 'admin@example.com', password: btoa('admin123'), isAdmin: true, createdAt: Date.now() };
+            users.push(admin);
+            LS.set(K_USERS, users);
+            alert('Admin user created: admin@example.com / admin123');
+          }
+          loginUser(admin);
+        } else {
+          return alert('Wrong admin password (demo only)');
+        }
+      }
+      // now in admin
+      const products = getProducts();
+      openModal(`
+        <h3>Admin — Manage Products</h3>
+        <div style="margin-bottom:10px"><button class="btn" onclick="openAddProduct()">Add new product</button></div>
+        <div>
+          ${products.length ? products.map(p=>`
+            <div style="border-bottom:1px solid #f1f5f9;padding:8px 0;display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <div style="font-weight:700">${escapeHtml(p.title)}</div>
+                <div class="small muted">${escapeHtml(p.category || '')} • ${currency(p.price)}</div>
+              </div>
+              <div style="display:flex;gap:8px">
+                <button class="btn ghost" onclick='openEditProduct("${p._id}")'>Edit</button>
+                <button class="btn" onclick='deleteProduct("${p._id}")'>Delete</button>
+              </div>
+            </div>
+          `).join('') : '<div class="empty">No products</div>'}
+        </div>
+      `);
+    }
+
+    function openAddProduct(){
+      openModal(`
+        <h3>Add product</h3>
+        <form onsubmit="event.preventDefault(); submitAddProduct()">
+          <label>Title<input id="pTitle" required /></label>
+          <label>Category<input id="pCategory" required /></label>
+          <label>Price<input id="pPrice" type="number" required /></label>
+          <label>Inventory<input id="pInventory" type="number" required /></label>
+          <label>Image URL<input id="pImage" value="https://picsum.photos/seed/${Math.floor(Math.random()*999)}/800/600" /></label>
+          <label>Description<textarea id="pDesc"></textarea></label>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button class="btn" type="submit">Create</button>
+            <button class="btn ghost" type="button" onclick="openAdmin()">Back</button>
+          </div>
+        </form>
+      `);
+    }
+
+    function submitAddProduct(){
+      const title = $id('pTitle').value.trim();
+      const category = $id('pCategory').value.trim();
+      const price = Number($id('pPrice').value) || 0;
+      const inventory = Number($id('pInventory').value) || 0;
+      const image = $id('pImage').value.trim();
+      const description = $id('pDesc').value.trim();
+      if(!title) return alert('Title required');
+      const prods = getProducts();
+      prods.unshift({ _id: uid('p'), title, category, price, inventory, image, description, createdAt: Date.now(), popular: 0 });
+      saveProducts(prods);
+      populateCategory();
+      renderProducts();
+      openAdmin();
+    }
+
+    function openEditProduct(id){
+      const p = getProducts().find(x=>x._id===id);
+      if(!p) return alert('Not found');
+      openModal(`
+        <h3>Edit product</h3>
+        <form onsubmit="event.preventDefault(); submitEditProduct('${id}')">
+          <label>Title<input id="eTitle" value="${escapeAttr(p.title)}" required /></label>
+          <label>Category<input id="eCategory" value="${escapeAttr(p.category || '')}" required /></label>
+          <label>Price<input id="ePrice" type="number" value="${p.price}" required /></label>
+          <label>Inventory<input id="eInventory" type="number" value="${p.inventory}" required /></label>
+          <label>Image URL<input id="eImage" value="${escapeAttr(p.image)}" /></label>
+          <label>Description<textarea id="eDesc">${escapeHtml(p.description || '')}</textarea></label>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button class="btn" type="submit">Save</button>
+            <button class="btn ghost" type="button" onclick="openAdmin()">Back</button>
+          </div>
+        </form>
+      `);
+    }
+
+    function submitEditProduct(id){
+      const prods = getProducts();
+      const p = prods.find(x=>x._id===id);
+      if(!p) return alert('Not found');
+      p.title = $id('eTitle').value.trim();
+      p.category = $id('eCategory').value.trim();
+      p.price = Number($id('ePrice').value) || 0;
+      p.inventory = Number($id('eInventory').value) || 0;
+      p.image = $id('eImage').value.trim();
+      p.description = $id('eDesc').value.trim();
+      saveProducts(prods);
+      populateCategory();
+      renderProducts();
+      openAdmin();
+    }
+
+    function deleteProduct(id){
+      if(!confirm('Delete product?')) return;
+      let prods = getProducts();
+      prods = prods.filter(x=>x._id !== id);
+      saveProducts(prods);
+      populateCategory();
+      renderProducts();
+      openAdmin();
+    }
+
+    /* ---------- Modal helpers ---------- */
+    const modalBg = $id('modalBg');
+    const modalContent = $id('modalContent');
+    const modalState = { authMode: 'login' };
+
+    function openModal(html){
+      modalContent.innerHTML = html;
+      modalBg.style.display = 'flex';
+    }
+    function closeModal(ev){
+      if(ev && ev.target && ev.target !== modalBg) return;
+      modalBg.style.display = 'none';
+      modalContent.innerHTML = '';
+    }
+    function closeModalForce(){ modalBg.style.display = 'none'; modalContent.innerHTML = ''; }
+
+    /* ---------- tiny utilities ---------- */
+    function escapeHtml(s){ if(!s && s!==0) return ''; return String(s).replace(/[&<>"']/g, function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]}) }
+    function escapeAttr(s){ return escapeHtml(s).replace(/\n/g,' '); }
+
+    /* ---------- small toast ---------- */
+    function showToast(msg, timeout=2000){
+      const t = document.createElement('div');
+      t.textContent = msg;
+      t.style = 'position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:#111827;color:white;padding:10px 14px;border-radius:10px;z-index:80';
+      document.body.appendChild(t);
+      setTimeout(()=> t.style.opacity='0.0', timeout - 300);
+      setTimeout(()=> t.remove(), timeout);
+    }
+
+    /* ---------- Export data ---------- */
+    function exportData(){
+      const data = {
+        products: LS.get(K_PRODUCTS, []),
+        users: LS.get(K_USERS, []),
+        orders: LS.get(K_ORDERS, []),
+        cart: LS.get('STORE_CART', [])
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'store-data.json'; a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    /* ---------- Utility: show simple modal for quick info ---------- */
+    function quickShow(title, html){
+      openModal(`<h3>${title}</h3><div>${html}</div><div style="margin-top:12px" class="right"><button class="btn" onclick="closeModal()">Close</button></div>`);
+    }
+
+    /* ---------- Small helper for first-run logic ---------- */
+    (function init(){
+      seedIfEmpty();
+      renderAuthButton();
+      renderProducts();
+      renderCart();
+      populateCategory();
+    })();
+
+    /* ---------- View orders (admin view) ---------- */
+    function viewAllOrders(){
+      const user = currentUser();
+      if(!user || !user.isAdmin) return alert('Admin only');
+      const orders = LS.get(K_ORDERS, []);
+      openModal(`
+        <h3>All Orders</h3>
+        ${orders.length ? orders.map(o=>`
+          <div style="padding:8px;border-bottom:1px solid #f1f5f9">
+            <div style="display:flex;justify-content:space-between">
+              <div><strong>${o._id}</strong><div class="small muted">${new Date(o.createdAt).toLocaleString()}</div></div>
+              <div class="pill">${currency(o.total)}</div>
+            </div>
+            <div style="margin-top:8px">${o.items.map(it=>`<div class="small">${escapeHtml(it.title)} × ${it.quantity} — ${currency(it.price*it.quantity)}</div>`).join('')}</div>
+            <div style="margin-top:8px" class="flex">
+              <select id="status_${o._id}">
+                <option ${o.status==='created'?'selected':''}>created</option>
+                <option ${o.status==='processing'?'selected':''}>processing</option>
+                <option ${o.status==='shipped'?'selected':''}>shipped</option>
+                <option ${o.status==='delivered'?'selected':''}>delivered</option>
+              </select>
+              <button class="btn" onclick="updateOrderStatus('${o._id}')">Update</button>
+            </div>
+          </div>
+        `).join('') : '<div class="empty">No orders</div>'}
+      `);
+    }
+
+    function updateOrderStatus(id){
+      const sel = $id('status_' + id);
+      if(!sel) return;
+      const orders = LS.get(K_ORDERS, []);
+      const o = orders.find(x=>x._id===id);
+      if(!o) return;
+      o.status = sel.value;
+      LS.set(K_ORDERS, orders);
+      showToast('Order updated');
+      viewAllOrders();
+    }
+
+    /* ---------- Small utility to hook admin orders - add button if admin ---------- */
+    (function addAdminExtras(){
+      const node = document.createElement('button');
+      node.className = 'btn ghost';
+      node.style.marginLeft = '8px';
+      node.textContent = 'Orders (admin)';
+      node.onclick = viewAllOrders;
+      document.querySelector('.controls').appendChild(node);
+    })();
+
+    /* ---------- small helpers for safe modal closing ---------- */
+    window.closeModal = function(e){
+      if(e && e.target && e.target !== modalBg) return;
+      modalBg.style.display = 'none';
+      modalContent.innerHTML = '';
+    }
+
+  </script>
+</body>
+</html>
